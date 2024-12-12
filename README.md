@@ -9,6 +9,7 @@ If the customer does the transaction is greater than 100$, then the reward point
 The tables to be created in MySQL DB are
 
 Customer
+
 Transaction
 
 The relationship between the customer and the Transaction is One-To-many. Here Customer ID is used as a foreign key in the Transaction table. Whenever a new transaction is made, the reward point is calculated and stored in the database along with the customer transaction data.
