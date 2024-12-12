@@ -17,17 +17,7 @@ import com.retail.rewardpointcalc.service.RewardPointCalcService;
 public class RewardPointCalcController {
 
 	@Autowired
-	RewardPointCalcService rewardPointCalcService;
-
-	@GetMapping("/sayHello")
-	public String sayHello() {
-		return "Hello World!!!!";
-	}
-
-	@GetMapping("/rewardpoint/find-by-id/{customerId}")
-	public String findRewardPointById(@PathVariable Long customerId) {
-		return null;
-	}
+	RewardPointCalcService rewardPointCalcService;	
 	
 
 	@PostMapping("/rewardpoint")
