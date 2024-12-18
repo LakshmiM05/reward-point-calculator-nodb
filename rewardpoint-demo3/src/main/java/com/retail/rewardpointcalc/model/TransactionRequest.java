@@ -18,7 +18,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TransactionRequest {
 
-	private Long transId;
+	private int transId;
 
 	private Date transDate;
 	@NotNull(message = "Enter a valid transaction amount")

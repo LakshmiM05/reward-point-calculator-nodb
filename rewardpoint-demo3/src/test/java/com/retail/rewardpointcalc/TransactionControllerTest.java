@@ -51,7 +51,7 @@ public class TransactionControllerTest {
 	        transreq.setRewardpoints(120);
 	        transreq.setTransAmt(100);
 	        transreq.setTransDate(new Date(0));
-	        transreq.setTransId(1l);
+	        transreq.setTransId(1);
 	     
 	        when(transactionRepository.save(any(Transaction.class))).thenReturn(new Transaction());	
 	        when(rewardPointCalcService.getCustomerRewardPoint(any(Integer.class))).thenReturn(20);	

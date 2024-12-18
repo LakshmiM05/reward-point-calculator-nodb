@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.retail.rewardpointcalc.entity.Customer;
@@ -29,10 +29,11 @@ import com.retail.rewardpointcalc.entity.Customer;
 import com.retail.rewardpointcalc.model.CustomerRequest;
 import com.retail.rewardpointcalc.model.CustomerResponse;
 import com.retail.rewardpointcalc.model.CustomerResponseMapper;
-
+import com.retail.rewardpointcalc.model.CustomerTransactionRequest;
 import com.retail.rewardpointcalc.model.TransactionResponse;
 
 import com.retail.rewardpointcalc.repository.CustomerRepository;
+import com.retail.rewardpointcalc.service.RewardPointCalcService;
 
 import jakarta.validation.Valid;
 
@@ -40,6 +41,11 @@ import jakarta.validation.Valid;
 public class CustomerController {
 	@Autowired
 	private CustomerRepository repository;
+	
+	
+		@Autowired
+		private CustomerResponseMapper getCustomerMapper;
+	
 
 	CustomerResponse custResponse = null;
 	TransactionResponse transResponse = null;
@@ -47,6 +53,10 @@ public class CustomerController {
 	List<TransactionResponse> listTrans = null;
 	int totalRewardPoints = 0;
 	int rewardpointsum3month = 0;
+	
+		@Autowired
+		private RewardPointCalcService rewardPointCalcService; 
+		
 
 	@PostMapping("/customer")
 
@@ -133,7 +143,52 @@ public class CustomerController {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(customerResponse);
 		}
 
+	} 
+	
+	
+	
+	                                       
+	@PostMapping("/customer/{customerId}/rewardpointsum")
+	public ResponseEntity<CustomerResponse> findCustomerWith3MonthPoint(@RequestBody Optional<CustomerTransactionRequest> customerTransactionRequest) {
+		totalRewardPoints = 0;
+		rewardpointsum3month = 0;
+		System.out.println(rewardPointCalcService);
+		//CustomerResponseMapper customerResponseMapper = new CustomerResponseMapper(this.rewardPointCalcService);
+		CustomerResponseMapper customerResponseMapper = new CustomerResponseMapper();
+		CustomerResponse customerResponse = new CustomerResponse();
+		if (customerTransactionRequest.isPresent()) {
+			customerResponse = getCustomerMapper.mapToCustomerTransactionResponse(customerTransactionRequest.get(), customerResponse);
+			if (customerResponse.getTransList().isPresent()) {
+
+				customerResponse.getTransList().get().forEach(transaction -> {
+					totalRewardPoints = calculateTotRewardPoints(transaction.getRewardpoints());
+				});
+
+				LocalDate threeMonthsAgo = LocalDate.now().minus(Period.ofMonths(3));
+
+				List<TransactionResponse> threemonthList = customerResponse.getTransList().get().stream()
+						.filter(transaction -> convert(transaction.getTransDate()).isAfter(threeMonthsAgo))
+						.collect(Collectors.toList());
+				rewardpointsum3month = threemonthList.stream().mapToInt(trans -> trans.getRewardpoints()).sum();
+				customerResponse.setRewardpoints_3month(rewardpointsum3month);
+
+				customerResponse.setTotalRewardPoints(totalRewardPoints);
+				DateTimeFormatter dtf = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy");
+				//yyyy-MM-dd
+				//DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");	
+				Map<Object, List<TransactionResponse>> monthwiseMap = customerResponse.getTransList().get().stream()
+						.collect(Collectors.groupingBy(
+								transaction -> YearMonth.parse(transaction.getTransDate().toString(), dtf)));
+				customerResponse.setMonthWiseRewardPoint(iterateUsingIteratorAndEntrySet(monthwiseMap));
+
+			}
+			return ResponseEntity.status(HttpStatus.OK).body(customerResponse);
+		} else {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(customerResponse);
+		}
+
 	}
+
 
 	@GetMapping("/customer/allcustomers")
 	public ResponseEntity<List<CustomerResponse>> getAllCustomer() {
